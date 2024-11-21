@@ -35,7 +35,7 @@ int main() {
 		read(server,&req,sizeof(req));
 		}
 
-		// printf("Received a request from %s to send the message %s to %s.\n",req.source,req.msg,req.target);
+		 printf("Received a request from %s to send the message %s to %s.\n",req.source,req.msg,req.target);
 
 		// TODO:
 		// open target FIFO and write the whole message struct to the target FIFO
