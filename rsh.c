@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
 		continue;
 	}
 
-	if (strcmp(cmd,"exit")==0) break;
+	if (strcmp(cmd,"exit")==0) printf("Exiting....") break;
 
 	if (strcmp(cmd,"cd")==0) {
 		char *targetDir=strtok(NULL," ");
