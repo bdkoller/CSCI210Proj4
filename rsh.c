@@ -11,13 +11,14 @@
 
 extern char **environ;
 char uName[20];
+char last[200];
 
 char *allowed[N] = {"cp","touch","mkdir","ls","pwd","cat","grep","chmod","diff","cd","exit","help","sendmsg"};
 
 struct message {
 	char source[50];
 	char target[50]; 
-	char msg[200];
+	char msg[200];\
 };
 
 void terminate(int sig) {
@@ -31,12 +32,23 @@ void sendmsg (char *user, char *target, char *msg) {
 	// Send a request to the server to send the message (msg) to the target user (target)
 	// by creating the message structure and writing it to server's FIFO
 
+	// Create the message structure
+    struct message message_struct;
+    strcpy(message_struct.source, user);
+    strcpy(message_struct.target, target);
+    strcpy(message_struct.msg, msg);
 
+    // Open the server's FIFO for writing
+    int fifo_fd = open("serverFIFO", O_WRONLY);
+    if (fifo_fd == -1) {
+        perror("open");
+        exit(1);
+    }
 
+    // Write the message structure to the FIFO
+    write(fifo_fd, &message_struct, sizeof(message_struct));
 
-
-
-
+    close(fifo_fd);
 
 }
 
@@ -49,12 +61,33 @@ void* messageListener(void *arg) {
 	// Incoming message from [source]: [message]
 	// put an end of line at the end of the message
 
+	{
+	int fifo_fd = open(uName, O_RDONLY);
+    if (fifo_fd == -1) {
+        perror("open");
+        exit(1);
+    }
 
+    while (1) {
+        struct message incoming_message;
+        read(fifo_fd, &incoming_message, sizeof(incoming_message));
 
+		if (strlen(incoming_message.msg) > 0) {
+			printf("Incoming message from %s: %s\n", incoming_message.source, incoming_message.msg);
+			break;
+		}
 
+        
+    }
 
+    close(fifo_fd);
+	
+    return NULL;
 
 	pthread_exit((void*)0);
+	}
+	
+
 }
 
 int isAllowed(const char*cmd) {
@@ -85,12 +118,14 @@ int main(int argc, char **argv) {
 
     // TODO:
     // create the message listener thread
-
-
-
-
+	
 
     while (1) {
+
+	{
+    pthread_t listener_thread;
+	pthread_create(&listener_thread, NULL, messageListener, NULL);
+	}
 
 	fprintf(stderr,"rsh>");
 
@@ -113,7 +148,7 @@ int main(int argc, char **argv) {
 	if (strcmp(cmd,"sendmsg")==0) {
 		// TODO: Create the target user and
 		// the message string and call the sendmsg function
-
+		
 		// NOTE: The message itself can contain spaces
 		// If the user types: "sendmsg user1 hello there"
 		// target should be "user1" 
@@ -124,14 +159,16 @@ int main(int argc, char **argv) {
 		// if no message is specified, you should print the followingA
  		// printf("sendMsg: you have to enter a message\n");
 
+		char *target = strtok(NULL, " ");
+		char *msg = strtok(NULL, "");
 
-
-
-
-
-
-
-
+		if (!target) {
+			printf("sendmsg: you have to specify target user\n");
+		} else if (!msg) {
+			printf("sendmsg: you have to enter a message\n");
+		} else {
+			sendmsg(uName, target, msg);
+		}
 
 		continue;
 	}
@@ -197,3 +234,4 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
+
