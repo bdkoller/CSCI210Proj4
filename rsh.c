@@ -74,12 +74,12 @@ void* messageListener(void *arg) {
 
 		if (strlen(incoming_message.msg) > 0) {
 			printf("Incoming message from %s: %s\n", incoming_message.source, incoming_message.msg);
-			break;
 		}
 
-        
-    }
+		incoming_message.msg[0] = '\0';
 
+    }
+	
     close(fifo_fd);
 	
     return NULL;
@@ -119,13 +119,12 @@ int main(int argc, char **argv) {
     // TODO:
     // create the message listener thread
 	
-
-    while (1) {
-
 	{
     pthread_t listener_thread;
 	pthread_create(&listener_thread, NULL, messageListener, NULL);
 	}
+
+    while (1) {
 
 	fprintf(stderr,"rsh>");
 
